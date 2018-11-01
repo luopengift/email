@@ -1,31 +1,50 @@
 package email
 
 import (
-	"bytes"
-	"fmt"
+	"net/mail"
 	"time"
 )
 
 type Message struct {
-	Date    time.Time `json:"Date"`
-	From    string    `json:"From"`
-	To      string    `json:"To"`
-	Cc      string    `json:"Cc"`
-	Bcc     string    `json:"Bcc"`
-	Subject string    `json:"Subject"`
+	mail.Header
 }
 
-func (msg *Message) Bytes() []byte {
-	var content bytes.Buffer
-	fmt.Fprintf(&content, "From: %s\r\n", msg.From)
-	fmt.Fprintf(&content, "To: %s\r\n", msg.To)
-	fmt.Fprintf(&content, "Subject: %s\r\n", msg.Subject)
-	//fmt.Fprintf(&content, "Content-Type: %s\r\n", msg.ContentType)
-	fmt.Fprintf(&content, "MIME-Version: 1.0\r\n")
-	fmt.Fprintf(&content, "Date: %s\r\n", msg.Date.Format(time.RFC1123Z))
-	fmt.Fprintf(&content, "\r\n")
+func (msg *Message) SetHeader(key string, value ...string) *Message {
+	msg.Header[key] = value
+	return msg
+}
 
-	//fmt.Fprintf(&content, "%v", ctn.Body)
+func (msg *Message) SetSubject(value ...string) *Message {
+	msg.SetHeader("Subject", value...)
+	return msg
+}
 
-	return content.Bytes()
+func (msg *Message) SetFrom(value ...string) *Message {
+	msg.SetHeader("From", value...)
+	return msg
+}
+func (msg *Message) SetTo(value ...string) *Message {
+	msg.SetHeader("To", value...)
+	return msg
+}
+func (msg *Message) SetCc(value ...string) *Message {
+	msg.SetHeader("Cc", value...)
+	return msg
+}
+func (msg *Message) SetNow() *Message {
+	msg.SetHeader("Date", time.Now().Format(time.RFC1123Z))
+	return msg
+}
+
+func (msg *Message) SetVersion() *Message {
+	msg.SetHeader("MIME-Version", "1.0")
+	return msg
+}
+
+func NewMessage() *Message {
+	msg := &Message{
+		Header: make(mail.Header),
+	}
+	msg.SetNow().SetVersion()
+	return msg
 }
