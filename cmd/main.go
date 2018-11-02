@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	smtp := email.NewSMTP("smtp.exmail.qq.com", "465"))
+	smtp := email.NewSMTP("smtp.exmail.qq.com", "25", "xx@xx.com", "xx")
 	for i := 0; i < 1; i++ {
 		now := time.Now()
 		if err := smtp.Init(); err != nil {
@@ -21,8 +21,13 @@ func main() {
 			return
 		}
 		fmt.Println("auth success.")
-
-		msg := email.NewMessage()
+		attach, err := email.NewAttachment("/Users/xx/Downloads/aa.pdf", true)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		msg := email.NewMessage().From("xx@xx.com").To("xx@xx.com").
+			ReplyTo("xx@xx.com").Text("hello").Attachment(attach)
 		if err := smtp.Send(msg); err != nil {
 			fmt.Println(err)
 			return

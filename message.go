@@ -8,7 +8,8 @@ import (
 // Message email message
 type Message struct {
 	mail.Header
-	Body string
+	Body        string
+	Attachments []*Attachment
 }
 
 // SetHeader set header
@@ -47,6 +48,12 @@ func (msg *Message) Bcc(value ...string) *Message {
 	return msg
 }
 
+//ReplyTo reply to
+func (msg *Message) ReplyTo(values ...string) *Message {
+	msg.SetHeader("Reply-To", values...)
+	return msg
+}
+
 // Now set time now
 func (msg *Message) Now() *Message {
 	msg.SetHeader("Date", time.Now().Format(time.RFC1123Z))
@@ -61,15 +68,20 @@ func (msg *Message) Version() *Message {
 
 // HTML html
 func (msg *Message) HTML(body string) *Message {
-	msg.SetHeader("Context-Type", "text/heml")
+	msg.SetHeader("Content-Type", "text/heml")
 	msg.Body = body
 	return msg
 }
 
 // Text text
 func (msg *Message) Text(body string) *Message {
-	msg.SetHeader("Context-Type", "text/plain")
+	msg.SetHeader("Content-Type", "text/plain")
 	msg.Body = body
+	return msg
+}
+
+func (msg *Message) Attachment(attach *Attachment) *Message {
+	msg.Attachments = append(msg.Attachments, attach)
 	return msg
 }
 
