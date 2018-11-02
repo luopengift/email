@@ -8,8 +8,8 @@ import (
 )
 
 func main() {
-	smtp := email.NewSMTP("smtp.exmail.qq.com:25", "xx", "xx")
-	for i := 0; i < 20; i++ {
+	smtp := email.NewSMTP("smtp.exmail.qq.com", "465"))
+	for i := 0; i < 1; i++ {
 		now := time.Now()
 		if err := smtp.Init(); err != nil {
 			fmt.Println(err)
@@ -22,7 +22,7 @@ func main() {
 		}
 		fmt.Println("auth success.")
 
-		msg := email.NewMessage().SetFrom("xx").SetTo("xx")
+		msg := email.NewMessage()
 		if err := smtp.Send(msg); err != nil {
 			fmt.Println(err)
 			return
