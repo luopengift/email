@@ -6,9 +6,11 @@ import (
 	"encoding/base64"
 	"fmt"
 	"mime"
+	"net"
 	"net/smtp"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/luopengift/log"
 	"github.com/luopengift/types"
@@ -20,6 +22,8 @@ type SMTP struct {
 	Port     string
 	Username string
 	Password string
+	Timeout  int
+	SSL      bool
 	client   *smtp.Client
 }
 
@@ -30,7 +34,13 @@ func NewSMTP(host, port, username, password string) *SMTP {
 		Port:     port,
 		Username: username,
 		Password: password,
+		Timeout:  1,
+		SSL:      false,
 	}
+}
+
+func (s *SMTP) SetTimeout(timeout int) {
+	s.Timeout = timeout
 }
 
 func (s *SMTP) auth(mechs string) (smtp.Auth, error) {
@@ -54,11 +64,16 @@ func (s *SMTP) Parse(v interface{}) error {
 
 // Init init smtp config and client
 func (s *SMTP) Init() (err error) {
-
 	server := fmt.Sprintf("%s:%s", s.Host, s.Port)
-	log.Debug("%v", server)
-	s.client, err = smtp.Dial(server)
-	log.Debug("end")
+	//s.client, err = smtp.Dial(server)
+	conn, err := net.DialTimeout("tcp4", server, time.Duration(s.Timeout)*time.Second)
+	if err != nil {
+		return nil
+	}
+	if s.Port == "465" {
+		conn = tls.Client(conn, s.tlsConfig())
+	}
+	s.client, err = smtp.NewClient(conn, s.Host)
 	return err
 }
 
@@ -73,7 +88,7 @@ func (s *SMTP) tlsConfig() *tls.Config {
 // Auth auth
 func (s *SMTP) Auth() error {
 	//Check if TLS is required
-	if s.Port != "25" {
+	if s.Port == "465" || s.Port == "587" {
 		if ok, _ := s.client.Extension("STARTTLS"); ok {
 			if err := s.client.StartTLS(s.tlsConfig()); err != nil {
 				return err

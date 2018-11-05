@@ -68,7 +68,7 @@ func (msg *Message) Version() *Message {
 
 // HTML html
 func (msg *Message) HTML(body string) *Message {
-	msg.SetHeader("Content-Type", "text/heml")
+	msg.SetHeader("Content-Type", "text/html")
 	msg.Body = body
 	return msg
 }
