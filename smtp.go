@@ -133,8 +133,10 @@ func (s *SMTP) Close() error {
 
 // Send message
 func (s *SMTP) Send(msg *Message) error {
-
 	var buf bytes.Buffer
+	if msg.Header.Get("From") == "" {
+		msg.From(s.Username)
+	}
 	for key := range msg.Header {
 		switch key {
 		case "From":
