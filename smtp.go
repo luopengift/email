@@ -18,12 +18,12 @@ import (
 
 // SMTP client
 type SMTP struct {
-	Host     string
-	Port     string
-	Username string
-	Password string
-	Timeout  int
-	SSL      bool
+	Host     string `json:"host" yaml:"host"`
+	Port     string `json:"port" yaml:"port"`
+	Username string `json:"username" yaml:"username"`
+	Password string `json:"password" yaml:"password"`
+	Timeout  int    `json:"timeout" yaml:"timeout"`
+	SSL      bool   `json:"ssl" yaml:"ssl"` //not use
 	client   *smtp.Client
 }
 
@@ -39,6 +39,7 @@ func NewSMTP(host, port, username, password string) *SMTP {
 	}
 }
 
+// SetTimeout set timeout
 func (s *SMTP) SetTimeout(timeout int) {
 	s.Timeout = timeout
 }

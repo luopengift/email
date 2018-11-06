@@ -7,11 +7,12 @@ import (
 
 // Attachment represents an email attachment.
 type Attachment struct {
-	Name   string
-	Data   []byte
-	Inline bool
+	Name   string `json:"name" yaml:"name"`
+	Data   []byte `json:"-" yaml:"-"`
+	Inline bool   `json:"inline" yaml:"inline"`
 }
 
+// NewAttachment create new attach
 func NewAttachment(name string, inline bool) (*Attachment, error) {
 	var err error
 	attach := &Attachment{}
