@@ -28,18 +28,10 @@ func (m *Mail) GET() {
 }
 
 func (m *Mail) POST() {
-	post := map[string]string{}
-	if m.Err = json.Unmarshal(m.GetBodyArgs(), &post); m.Err != nil {
+	msg := email.NewMessage()
+	if m.Err = json.Unmarshal(m.GetBodyArgs(), &msg); m.Err != nil {
 		m.Set(101, "unmarshal post body error")
 		return
-	}
-	msg := email.NewMessage()
-	if body, ok := post["Body"]; ok {
-		msg.Text(body)
-		delete(post, "Body")
-	}
-	for k, v := range post {
-		msg.SetHeader(k, v)
 	}
 	if m.Err = m.SMTP.Init(); m.Err != nil {
 		log.Error("%v", m.Err)

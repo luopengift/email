@@ -1,6 +1,7 @@
 package email
 
 import (
+	"encoding/json"
 	"net/mail"
 	"time"
 )
@@ -83,6 +84,21 @@ func (msg *Message) Text(body string) *Message {
 func (msg *Message) Attachment(attach *Attachment) *Message {
 	msg.Attachments = append(msg.Attachments, attach)
 	return msg
+}
+
+func (msg *Message) UnmarshalJSON(data []byte) error {
+	m := map[string]string{}
+	if err := json.Unmarshal(data, &m); err != nil {
+		return nil
+	}
+	if body, ok := m["Body"]; ok {
+		msg.Text(body)
+		delete(m, "Body")
+	}
+	for k, v := range m {
+		msg.SetHeader(k, v)
+	}
+	return nil
 }
 
 // NewMessage new message
