@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/luopengift/log"
 	"github.com/luopengift/types"
 )
 
@@ -144,7 +143,6 @@ func (s *SMTP) Send(msg *Message) error {
 			if err != nil {
 				return err
 			}
-			log.Debug("%v, %v", key, froms[0].String())
 			for _, from := range froms {
 				if err = s.client.Mail(from.Address); err != nil {
 					return err
