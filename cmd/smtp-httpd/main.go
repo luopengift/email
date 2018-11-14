@@ -11,40 +11,45 @@ import (
 	"github.com/luopengift/types"
 )
 
-var mail = &email.SMTP{}
+var config = &email.Config{}
 
+// Mail mail
 type Mail struct {
-	*email.SMTP
+	*email.Config
 	gohttp.APIHandler
 }
 
+// Initialize init
 func (m *Mail) Initialize() {
-	m.SMTP = mail
+	m.Config = config
 }
 
+// GET method
 func (m *Mail) GET() {
-	log.Info("%#v", m.SMTP)
-	m.Output(m.SMTP)
+	log.Info("%#v", m.Config)
+	m.Output(m.Config)
 }
 
+// POST method
 func (m *Mail) POST() {
 	msg := email.NewMessage()
 	if m.Err = json.Unmarshal(m.GetBodyArgs(), &msg); m.Err != nil {
 		m.Set(101, "unmarshal post body error")
 		return
 	}
-	if m.Err = m.SMTP.Init(); m.Err != nil {
+	smtp := email.New(m.Config)
+	if m.Err = smtp.Init(); m.Err != nil {
 		log.Error("%v", m.Err)
 		m.Set(101, "init error")
 		return
 	}
-	if m.Err = m.SMTP.Auth(); m.Err != nil {
+	if m.Err = smtp.Auth(); m.Err != nil {
 		log.Error("%v", m.Err)
 		m.Set(101, "auth error")
 		return
 	}
 	//log.Display("dd", msg)
-	if m.Err = m.SMTP.Send(msg); m.Err != nil {
+	if m.Err = smtp.Send(msg); m.Err != nil {
 		log.Error("%v", m.Err)
 		m.Set(101, "send error")
 	}
@@ -52,13 +57,14 @@ func (m *Mail) POST() {
 
 func main() {
 	c := flag.String("c", "conf.yml", "(conf)配置文件")
-	p := flag.String("p", "8888", "(port)端口")
+	addr := flag.String("http", ":8888", "(ip:port)IP:端口")
 	flag.Parse()
-	if err := types.ParseConfigFile(mail, *c); err != nil {
+	if err := types.ParseConfigFile(config, *c); err != nil {
 		log.Error("%v", err)
 		return
 	}
+	fmt.Println(config)
 	app := gohttp.Init()
 	app.Route("/api/v1/email", &Mail{})
-	app.Run(fmt.Sprintf(":%v", *p))
+	app.Run(*addr)
 }

@@ -11,36 +11,39 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-
-	"github.com/luopengift/types"
 )
 
 // SMTP client
 type SMTP struct {
-	Host     string `json:"host" yaml:"host"`
-	Port     string `json:"port" yaml:"port"`
-	Username string `json:"username" yaml:"username"`
-	Password string `json:"password" yaml:"password"`
-	Timeout  int    `json:"timeout" yaml:"timeout"`
-	SSL      bool   `json:"ssl" yaml:"ssl"` //not use
-	client   *smtp.Client
+	*Config
+	client *smtp.Client
 }
 
-// NewSMTP new smtp
-func NewSMTP(host, port, username, password string) *SMTP {
-	return &SMTP{
+// NewSMTP new smtp with every config item
+func NewSMTP(host, port, username, password string) (*SMTP, error) {
+	config := &Config{
 		Host:     host,
 		Port:     port,
 		Username: username,
 		Password: password,
-		Timeout:  1,
-		SSL:      false,
 	}
+	return New(config)
 }
 
-// SetTimeout set timeout
-func (s *SMTP) SetTimeout(timeout int) {
-	s.Timeout = timeout
+// New new smtp
+func New(config *Config) (*SMTP, error) {
+	smtp := &SMTP{}
+	smtp.Config = config
+	if smtp.Timeout == 0 {
+		smtp.Timeout = 3
+	}
+	if err := smtp.Init(); err != nil {
+		return nil, err
+	}
+	if err := smtp.Auth(); err != nil {
+		return nil, err
+	}
+	return smtp, nil
 }
 
 func (s *SMTP) auth(mechs string) (smtp.Auth, error) {
@@ -57,29 +60,24 @@ func (s *SMTP) auth(mechs string) (smtp.Auth, error) {
 	return nil, nil
 }
 
-// Parse smtp from v
-func (s *SMTP) Parse(v interface{}) error {
-	return types.Format(v, s)
-}
-
 // Init init smtp config and client
 func (s *SMTP) Init() (err error) {
 	server := fmt.Sprintf("%s:%s", s.Host, s.Port)
 	//s.client, err = smtp.Dial(server)
 	conn, err := net.DialTimeout("tcp4", server, time.Duration(s.Timeout)*time.Second)
 	if err != nil {
-		return nil
+		return err
 	}
 	if s.Port == "465" {
-		conn = tls.Client(conn, s.tlsConfig())
+		conn = tls.Client(conn, tlsConfig(s.Host))
 	}
 	s.client, err = smtp.NewClient(conn, s.Host)
 	return err
 }
 
-func (s *SMTP) tlsConfig() *tls.Config {
+func tlsConfig(host string) *tls.Config {
 	return &tls.Config{
-		ServerName:         s.Host,
+		ServerName:         host,
 		InsecureSkipVerify: true,
 	}
 
@@ -90,7 +88,7 @@ func (s *SMTP) Auth() error {
 	//Check if TLS is required
 	if s.Port == "465" || s.Port == "587" {
 		if ok, _ := s.client.Extension("STARTTLS"); ok {
-			if err := s.client.StartTLS(s.tlsConfig()); err != nil {
+			if err := s.client.StartTLS(tlsConfig(s.Host)); err != nil {
 				return err
 			}
 		}
@@ -132,6 +130,10 @@ func (s *SMTP) Close() error {
 
 // Send message
 func (s *SMTP) Send(msg *Message) error {
+	return s.send(msg)
+}
+
+func (s *SMTP) send(msg *Message) error {
 	var buf bytes.Buffer
 	if msg.Header.Get("From") == "" {
 		msg.From(s.Username)
