@@ -37,17 +37,13 @@ func (m *Mail) POST() {
 		m.Set(101, "unmarshal post body error")
 		return
 	}
-	smtp := email.New(m.Config)
-	if m.Err = smtp.Init(); m.Err != nil {
+	var smtp *email.SMTP
+	if smtp, m.Err = email.New(m.Config); m.Err != nil {
 		log.Error("%v", m.Err)
-		m.Set(101, "init error")
+		m.Set(101, "new error")
 		return
 	}
-	if m.Err = smtp.Auth(); m.Err != nil {
-		log.Error("%v", m.Err)
-		m.Set(101, "auth error")
-		return
-	}
+	defer smtp.Close()
 	//log.Display("dd", msg)
 	if m.Err = smtp.Send(msg); m.Err != nil {
 		log.Error("%v", m.Err)
