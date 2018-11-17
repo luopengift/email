@@ -58,8 +58,14 @@ func (m *Mail) POST() {
 		m.Set(101, "new error")
 		return
 	}
+	var txt string
+	if len(msg.Body) > 1000 {
+		txt = msg.Body[:1000]
+	} else {
+		txt = msg.Body
+	}
 	defer smtp.Close()
-	//log.Display("dd", msg)
+	log.Info("send From: %v, To: %v, Cc: %v\n%v", msg.From("From"), msg.From("To"), msg.From("Cc"), txt)
 	if m.Err = smtp.Send(msg); m.Err != nil {
 		log.Error("%v", m.Err)
 		m.Set(101, "send error")
@@ -75,6 +81,10 @@ func main() {
 		log.ConsoleWithMagenta("%v", version.String())
 		return
 	}
+	file := log.NewFile("%Y-%M-%D.log")
+	file.SetMaxBytes(2000 * 1024 * 1024) // 200MB
+	log.SetOutput(file)
+
 	if err := types.ParseConfigFile(&config, *c); err != nil {
 		log.Error("%v", err)
 		return

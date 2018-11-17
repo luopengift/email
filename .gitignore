@@ -13,3 +13,4 @@
 *.yml
 *.yaml
 *.conf
+smtp-httpd
