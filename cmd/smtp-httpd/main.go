@@ -64,7 +64,7 @@ func (m *Mail) POST() {
 		txt = msg.Body
 	}
 	defer smtp.Close()
-	log.Info("send From: %v, To: %v, Cc: %v => %v", msg.Get("From"), msg.Get("To"), msg.Get("Cc"), txt)
+	log.Info("send From: %v, To: %v, Cc: %v Subject: %v => %v", msg.Get("From"), msg.Get("To"), msg.Get("Cc"), msg.Get("Subject"), txt)
 	if m.Err = smtp.Send(msg); m.Err != nil {
 		log.Error("%v", m.Err)
 		m.Set(101, "send error")
