@@ -57,14 +57,15 @@ func (m *Mail) POST() {
 		m.Set(101, "new error")
 		return
 	}
+	defer smtp.Close()
+
 	var txt string
 	if len(msg.Body) > 1000 {
 		txt = msg.Body[:1000]
 	} else {
 		txt = msg.Body
 	}
-	defer smtp.Close()
-	log.Info("send From: %v, To: %v, Cc: %v Subject: %v => %v", msg.Get("From"), msg.Get("To"), msg.Get("Cc"), msg.Get("Subject"), txt)
+	log.Info("send From: %v, To: %v, Cc: %v Subject: %v \n=> %v", msg.Get("From"), msg.Get("To"), msg.Get("Cc"), msg.Get("Subject"), txt)
 	if m.Err = smtp.Send(msg); m.Err != nil {
 		log.Error("%v", m.Err)
 		m.Set(101, "send error")
