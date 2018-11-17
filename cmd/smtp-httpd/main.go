@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
 
 	"github.com/luopengift/email"
 	"github.com/luopengift/gohttp"
@@ -65,7 +64,7 @@ func (m *Mail) POST() {
 		txt = msg.Body
 	}
 	defer smtp.Close()
-	log.Info("send From: %v, To: %v, Cc: %v\n%v", msg.From("From"), msg.From("To"), msg.From("Cc"), txt)
+	log.Info("send From: %v, To: %v, Cc: %v\n%v", msg.Get("From"), msg.Get("To"), msg.Get("Cc"), txt)
 	if m.Err = smtp.Send(msg); m.Err != nil {
 		log.Error("%v", m.Err)
 		m.Set(101, "send error")
@@ -89,8 +88,9 @@ func main() {
 		log.Error("%v", err)
 		return
 	}
-	fmt.Println(config)
+	log.Debug("config: %v", config)
 	app := gohttp.Init()
+	app.Log.SetOutput(file)
 	app.Route("^/api/v1/email$", &Mail{})
 	app.RouteFunCtx("^/-/reload$", func(ctx *gohttp.Context) {
 		if err := types.ParseConfigFile(&config, *c); err != nil {
@@ -100,5 +100,6 @@ func main() {
 		}
 		ctx.Output("ok")
 	})
+	log.Info("init ok!")
 	app.Run(*addr)
 }
