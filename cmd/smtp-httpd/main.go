@@ -9,6 +9,7 @@ import (
 	"github.com/luopengift/gohttp"
 	"github.com/luopengift/log"
 	"github.com/luopengift/types"
+	"github.com/luopengift/version"
 )
 
 var config []*email.Config
@@ -68,7 +69,12 @@ func (m *Mail) POST() {
 func main() {
 	c := flag.String("conf", "conf.yml", "(conf)配置文件")
 	addr := flag.String("http", ":8888", "(http)IP:端口")
+	v := flag.Bool("version", false, "(version)版本")
 	flag.Parse()
+	if *v {
+		log.ConsoleWithMagenta("%v", version.String())
+		return
+	}
 	if err := types.ParseConfigFile(&config, *c); err != nil {
 		log.Error("%v", err)
 		return
