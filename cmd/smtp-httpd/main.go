@@ -11,23 +11,23 @@ import (
 	"github.com/luopengift/types"
 )
 
-var config = &email.Config{}
+var config []*email.Config
 
 // Mail mail
 type Mail struct {
-	*email.Config
+	config []*email.Config
 	gohttp.APIHandler
 }
 
 // Initialize init
 func (m *Mail) Initialize() {
-	m.Config = config
+	m.config = config
 }
 
 // GET method
 func (m *Mail) GET() {
-	log.Info("%#v", m.Config)
-	m.Output(m.Config)
+	log.Info("%#v", m.config)
+	m.Output(m.config)
 }
 
 // POST method
@@ -37,8 +37,22 @@ func (m *Mail) POST() {
 		m.Set(101, "unmarshal post body error")
 		return
 	}
+	var getConfig = func() (*email.Config, error) {
+		for _, conf := range m.config {
+			if conf.Username == msg.Get("From") {
+				return conf, nil
+			}
+		}
+		return nil, log.Errorf("can not find email config by Username=%v", msg.Get("From"))
+	}
+	config, err := getConfig()
+	if err != nil {
+		log.Error("%v", err)
+		m.Set(101, err.Error())
+		return
+	}
 	var smtp *email.SMTP
-	if smtp, m.Err = email.New(m.Config); m.Err != nil {
+	if smtp, m.Err = email.New(config); m.Err != nil {
 		log.Error("%v", m.Err)
 		m.Set(101, "new error")
 		return
@@ -52,15 +66,23 @@ func (m *Mail) POST() {
 }
 
 func main() {
-	c := flag.String("c", "conf.yml", "(conf)配置文件")
-	addr := flag.String("http", ":8888", "(ip:port)IP:端口")
+	c := flag.String("conf", "conf.yml", "(conf)配置文件")
+	addr := flag.String("http", ":8888", "(http)IP:端口")
 	flag.Parse()
-	if err := types.ParseConfigFile(config, *c); err != nil {
+	if err := types.ParseConfigFile(&config, *c); err != nil {
 		log.Error("%v", err)
 		return
 	}
 	fmt.Println(config)
 	app := gohttp.Init()
-	app.Route("/api/v1/email", &Mail{})
+	app.Route("^/api/v1/email$", &Mail{})
+	app.RouteFunCtx("^/-/reload$", func(ctx *gohttp.Context) {
+		if err := types.ParseConfigFile(&config, *c); err != nil {
+			log.Error("%v", err)
+			ctx.Output(err, 400)
+			return
+		}
+		ctx.Output("ok")
+	})
 	app.Run(*addr)
 }

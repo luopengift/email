@@ -37,7 +37,7 @@ func New(config *Config) (*SMTP, error) {
 	if smtp.Timeout == 0 {
 		smtp.Timeout = 3
 	}
-	if err := smtp.Init(); err != nil {
+	if err := smtp.init(); err != nil {
 		return nil, err
 	}
 	if err := smtp.Auth(); err != nil {
@@ -61,7 +61,7 @@ func (s *SMTP) auth(mechs string) (smtp.Auth, error) {
 }
 
 // Init init smtp config and client
-func (s *SMTP) Init() (err error) {
+func (s *SMTP) init() (err error) {
 	server := fmt.Sprintf("%s:%s", s.Host, s.Port)
 	//s.client, err = smtp.Dial(server)
 	conn, err := net.DialTimeout("tcp4", server, time.Duration(s.Timeout)*time.Second)
