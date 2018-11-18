@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"strings"
 
 	"github.com/luopengift/email"
 	"github.com/luopengift/gohttp"
@@ -32,11 +33,16 @@ func (m *Mail) GET() {
 
 // POST method
 func (m *Mail) POST() {
-	msg := email.NewMessage()
-	if m.Err = json.Unmarshal(m.GetBodyArgs(), &msg); m.Err != nil {
+	body := map[string]string{}
+	if m.Err = json.Unmarshal(m.GetBodyArgs(), &body); m.Err != nil {
 		m.Set(101, "unmarshal post body error")
 		return
 	}
+	msg := email.NewMessage().From(body["From"]).To(strings.Split(body["To"], ",")...).Subject(body["Subject"]).Text(body["body"])
+	if body["Cc"] != "" {
+		msg.Cc(strings.Split(body["Cc"], ",")...)
+	}
+	//log.Display("msg", msg)
 	var getConfig = func() (*email.Config, error) {
 		for _, conf := range m.config {
 			if conf.Username == msg.Get("From") {
