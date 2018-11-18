@@ -214,12 +214,10 @@ func (s *SMTP) send(msg *Message) error {
 					}
 				}
 			}
-
 			fmt.Fprintf(&buf, "\r\n--%s", boundary)
 		}
 		buf.WriteString("--")
 	}
-
 	_, err := s.Write(buf.Bytes())
 	return err
 }

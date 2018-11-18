@@ -27,7 +27,7 @@ func main() {
 		// 	return
 		// }
 		// attach2, _ := email.NewAttachment("/Users/xxx/Desktop/main.go", true)
-		msg := email.NewMessage().From("xx@xx.com").To("xx@xx.com").
+		msg := email.NewMessage().From("xx@xx.com").To("xx@xx.com", "xx@xx.com").
 			Bcc("xx@xx.com").HTML("hello") //.Attachment(attach1).Attachment(attach2)
 		if err := smtp.Send(msg); err != nil {
 			fmt.Println(err)

@@ -3,6 +3,7 @@ package email
 import (
 	"encoding/json"
 	"net/mail"
+	"strings"
 	"time"
 )
 
@@ -15,7 +16,7 @@ type Message struct {
 
 // SetHeader set header
 func (msg *Message) SetHeader(key string, value ...string) *Message {
-	msg.Header[key] = value
+	msg.Header[key] = []string{strings.Join(value, ",")}
 	return msg
 }
 
@@ -81,11 +82,13 @@ func (msg *Message) Text(body string) *Message {
 	return msg
 }
 
+// Attachment Attachment
 func (msg *Message) Attachment(attach *Attachment) *Message {
 	msg.Attachments = append(msg.Attachments, attach)
 	return msg
 }
 
+// UnmarshalJSON UnmarshalJSON
 func (msg *Message) UnmarshalJSON(data []byte) error {
 	m := map[string]string{}
 	if err := json.Unmarshal(data, &m); err != nil {

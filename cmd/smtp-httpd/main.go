@@ -82,7 +82,7 @@ func main() {
 		return
 	}
 	file := log.NewFile("%Y-%M-%D.log")
-	file.SetMaxBytes(2000 * 1024 * 1024) // 200MB
+	file.SetMaxBytes(200 * 1024 * 1024) // 200MB
 	log.SetOutput(file)
 
 	if err := types.ParseConfigFile(&config, *c); err != nil {

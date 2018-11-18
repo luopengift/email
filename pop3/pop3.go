@@ -352,10 +352,9 @@ func stringToUint32(intString string) (uint32, error) {
 func setServerName(config *tls.Config, host string) *tls.Config {
 	if config == nil {
 		config = &tls.Config{ServerName: host}
-	} else if config.ServerName == "" {
-		c := *config
-		c.ServerName = host
-		config = &c
+	}
+	if config.ServerName == "" {
+		config.ServerName = host
 	}
 	return config
 }
