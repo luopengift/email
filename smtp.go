@@ -19,7 +19,7 @@ type SMTP struct {
 	client *smtp.Client
 }
 
-// NewSMTP new smtp with every config item
+// NewSMTP with every config item
 func NewSMTP(host, port, username, password string) (*SMTP, error) {
 	config := &Config{
 		Host:     host,
@@ -30,7 +30,7 @@ func NewSMTP(host, port, username, password string) (*SMTP, error) {
 	return New(config)
 }
 
-// New new smtp
+// New smtp client
 func New(config *Config) (*SMTP, error) {
 	smtp := &SMTP{}
 	smtp.Config = config
@@ -60,7 +60,7 @@ func (s *SMTP) auth(mechs string) (smtp.Auth, error) {
 	return nil, nil
 }
 
-// Init init smtp config and client
+// Init smtp config and client
 func (s *SMTP) init() (err error) {
 	server := fmt.Sprintf("%s:%s", s.Host, s.Port)
 	//s.client, err = smtp.Dial(server)
@@ -220,4 +220,14 @@ func (s *SMTP) send(msg *Message) error {
 	}
 	_, err := s.Write(buf.Bytes())
 	return err
+}
+
+// SendMail simple send email
+func SendMail(host, port, username, password, tos, body string) error {
+	smtp, err := NewSMTP(host, port, username, password)
+	if err != nil {
+		return err
+	}
+	msg := NewMessage().To(tos).HTML(body)
+	return smtp.SendExt(msg)
 }
