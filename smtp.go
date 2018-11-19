@@ -223,11 +223,11 @@ func (s *SMTP) send(msg *Message) error {
 }
 
 // SendMail simple send email
-func SendMail(host, port, username, password, tos, body string) error {
+func SendMail(host, port, username, password, tos, subject, body string) error {
 	smtp, err := NewSMTP(host, port, username, password)
 	if err != nil {
 		return err
 	}
-	msg := NewMessage().To(tos).HTML(body)
+	msg := NewMessage().To(tos).Subject(subject).HTML(body)
 	return smtp.SendExt(msg)
 }

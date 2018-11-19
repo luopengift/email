@@ -18,11 +18,10 @@ func (s *SMTP) sendExt(msg *Message) error {
 	for _, key := range []string{"Date", "Subject", "MIME-Version", "Reply-To"} {
 		fmt.Fprintf(&buf, "%v: %s\r\n", key, msg.Header.Get(key))
 	}
-	from := msg.Header.Get("From")
-	if from == "" {
+	if msg.Header.Get("From") == "" {
 		msg.From(s.Username)
 	}
-	froms, err := msg.Header.AddressList(from)
+	froms, err := msg.Header.AddressList("From")
 	if err != nil {
 		return err
 	}
@@ -35,7 +34,7 @@ func (s *SMTP) sendExt(msg *Message) error {
 	for _, key := range []string{"To", "Cc", "Bcc"} {
 		recvs, err := msg.Header.AddressList(key)
 		if err != nil {
-			return err
+			continue
 		}
 		for _, recv := range recvs {
 			if err = s.client.Rcpt(recv.Address); err != nil {

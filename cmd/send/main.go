@@ -31,9 +31,8 @@ func main() {
 	}
 	defer smtp.Close()
 	now := time.Now()
-	msg := email.NewMessage().From("xx@xx.com").To("xx@xx.com", "xx@xx.com").
-		Bcc("xx@xx.com").HTML("hello") //.Attachment(attach1).Attachment(attach2)
-	if err := smtp.Send(msg); err != nil {
+	msg := email.NewMessage().To("870148195@qq.com").HTML("hello") //.Attachment(attach1).Attachment(attach2)
+	if err := smtp.SendExt(msg); err != nil {
 		fmt.Println(err)
 		return
 	}
