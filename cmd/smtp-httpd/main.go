@@ -2,32 +2,24 @@ package main
 
 import (
 	"encoding/json"
-	"flag"
 
 	"github.com/luopengift/email"
+	"github.com/luopengift/framework"
 	"github.com/luopengift/gohttp"
 	"github.com/luopengift/log"
-	"github.com/luopengift/types"
-	"github.com/luopengift/version"
 )
 
-var config []*email.Config
+var config = map[string]*email.Config{}
 
 // Mail mail
 type Mail struct {
-	config []*email.Config
 	gohttp.APIHandler
-}
-
-// Initialize init
-func (m *Mail) Initialize() {
-	m.config = config
 }
 
 // GET method
 func (m *Mail) GET() {
-	log.Info("%#v", m.config)
-	m.Output(m.config)
+	log.Info("%#v", config)
+	m.Output(config)
 }
 
 // POST method
@@ -37,23 +29,15 @@ func (m *Mail) POST() {
 		m.Set(101, "unmarshal post body error")
 		return
 	}
-
-	var getConfig = func() (*email.Config, error) {
-		for _, conf := range m.config {
-			if conf.Username == msg.Get("From") {
-				return conf, nil
-			}
-		}
-		return nil, log.Errorf("can not find email config by Username=%v", msg.Get("From"))
-	}
-	config, err := getConfig()
-	if err != nil {
-		log.Error("%v", err)
-		m.Set(101, err.Error())
+	conf, ok := config[msg.Get("From")]
+	if !ok {
+		m.Err = log.Errorf("can not find email config by Username=%v", msg.Get("From"))
+		log.Error("%v", m.Err)
+		m.Set(101, m.Err.Error())
 		return
 	}
 	var smtp *email.SMTP
-	if smtp, m.Err = email.New(config); m.Err != nil {
+	if smtp, m.Err = email.New(conf); m.Err != nil {
 		log.Error("%v", m.Err)
 		m.Set(101, "new error")
 		return
@@ -74,34 +58,7 @@ func (m *Mail) POST() {
 }
 
 func main() {
-	c := flag.String("conf", "conf.yml", "(conf)配置文件")
-	addr := flag.String("http", ":8888", "(http)IP:端口")
-	v := flag.Bool("version", false, "(version)版本")
-	flag.Parse()
-	if *v {
-		log.ConsoleWithMagenta("%v", version.String())
-		return
-	}
-	file := log.NewFile("%Y-%M-%D.log")
-	file.SetMaxBytes(200 * 1024 * 1024) // 200MB
-	log.SetOutput(file)
-
-	if err := types.ParseConfigFile(&config, *c); err != nil {
-		log.Error("%v", err)
-		return
-	}
-	log.Debug("config: %v", config)
-	app := gohttp.Init()
-	app.Log.SetOutput(file)
-	app.Route("^/api/v1/email$", &Mail{})
-	app.RouteFunCtx("^/-/reload$", func(ctx *gohttp.Context) {
-		if err := types.ParseConfigFile(&config, *c); err != nil {
-			log.Error("%v", err)
-			ctx.Output(err, 400)
-			return
-		}
-		ctx.Output("ok")
-	})
-	log.Info("init ok!")
-	app.Run(*addr)
+	framework.BindConfig(&config)
+	framework.HttpdRoute("^/api/v1/email$", &Mail{})
+	framework.Run()
 }
